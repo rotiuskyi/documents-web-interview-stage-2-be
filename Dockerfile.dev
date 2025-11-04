@@ -1,0 +1,14 @@
+FROM node:22-alpine
+
+WORKDIR /app
+RUN apk add --no-cache procps curl
+
+ENV NODE_ENV=development
+
+COPY package*.json ./
+RUN NODE_ENV=development npm install --production=false
+RUN npm install @mikro-orm/cli @faker-js/faker
+
+COPY . .
+
+CMD ["npm", "run", "start:debug"]
