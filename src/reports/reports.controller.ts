@@ -12,16 +12,15 @@ export class ReportsController {
   ) {}
 
   @Get('actions')
-  async getActionsReport() {
+  async getActions() {
     const actions = await this.actionService.getFilteredActions()
     return { data: actions }
   }
 
-  @Post('export')
-  async addActionsExportJob() {
-    await this.reportsJobsQueue.add('csvExport', {
-      exportType: 'csv',
-      filters: ['foo', 'bar'],
+  @Post('actions/csv_export')
+  async processActionsCSV() {
+    await this.reportsJobsQueue.add('processActionsCSV', {
+      filters: { userId: [1, 2] },
     })
   }
 }
