@@ -38,6 +38,8 @@ services:
     depends_on:
       interview-postgres:
         condition: service_healthy
+    profiles:
+      - pgadmin
 
   interview-redis:
     container_name: interview-redis
@@ -104,6 +106,8 @@ services:
         condition: service_healthy
       app:
         condition: service_started
+    profiles:
+      - migration
 
 volumes:
   postgres-data:

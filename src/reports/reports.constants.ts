@@ -1,0 +1,1 @@
+export const REPORTS_JOBS_QUEUE = 'REPORTS_JOBS_QUEUE'
