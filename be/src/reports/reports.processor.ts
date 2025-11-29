@@ -6,7 +6,10 @@ import { MikroORM } from '@mikro-orm/postgresql'
 import { QueryOrder } from '@mikro-orm/core'
 import mikroOrmConfig from 'mikro-orm.config'
 import { ActionEntity } from 'actions/action.entity'
-import ProcessActionsCSVJob from './process-actions-csv.job'
+import {
+  ProcessActionsCSVJobData,
+  ProcessActionsCSVJobResult,
+} from './process-actions-csv-job.type'
 
 type ColumnName =
   | keyof Pick<ActionEntity, 'id' | 'actionType' | 'createdAt'>
@@ -49,7 +52,9 @@ function buildCSVRow(action: ActionEntity) {
   )
 }
 
-async function processActionsCSV(job: Job<ProcessActionsCSVJob>) {
+async function processActionsCSV(
+  job: Job<ProcessActionsCSVJobData, ProcessActionsCSVJobResult>,
+): Promise<ProcessActionsCSVJobResult> {
   performance.mark('start')
   const orm = await getOrm()
   const em = orm.em.fork()
@@ -108,9 +113,15 @@ async function processActionsCSV(job: Job<ProcessActionsCSVJob>) {
 
   performance.mark('end')
   performance.measure('processActionsCSV', 'start', 'end')
-  console.log(
-    `processActionsCSV finished in ${performance.getEntriesByName('processActionsCSV')[0].duration}ms`,
-  )
+  const duration = performance.getEntriesByName('processActionsCSV')[0].duration
+  console.log(`processActionsCSV finished in ${duration}ms`)
+
+  return {
+    outputPath,
+    totalRowsProcessed,
+    duration,
+    jobId: job.id,
+  }
 }
 
 export default processActionsCSV
