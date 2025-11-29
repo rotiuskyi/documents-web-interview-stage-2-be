@@ -10,7 +10,13 @@ import { ActionsModule } from 'actions/actions.module'
     ActionsModule,
     BullModule.registerQueue({
       name: REPORTS_JOBS_QUEUE,
-      processors: [join(__dirname, './reports.processor.js')],
+      processors: [
+        {
+          name: 'processActionsCSV',
+          path: join(__dirname, './reports.processor.js'),
+          concurrency: 2,
+        },
+      ],
     }),
   ],
   controllers: [ReportsController],

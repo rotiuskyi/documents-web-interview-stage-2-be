@@ -54,11 +54,6 @@ async function processActionsCSV(job: Job<ProcessActionsCSVJob>) {
   const orm = await getOrm()
   const em = orm.em.fork()
 
-  // Get total count for accurate progress tracking
-  const totalCount = await em.count(ActionEntity, {
-    user: { id: { $in: job.data.filters.userId } },
-  })
-
   const outputDir = join(process.cwd(), 'temp')
   const outputPath = join(outputDir, `report-${job.id}.csv`)
   const writeStream = createWriteStream(outputPath)
@@ -68,8 +63,11 @@ async function processActionsCSV(job: Job<ProcessActionsCSVJob>) {
   let lastId = 0
   let totalRowsProcessed = 0
 
-  // Initialize progress
   await job.updateProgress(0)
+
+  const totalCount = await em.count(ActionEntity, {
+    user: { id: { $in: job.data.filters.userId } },
+  })
 
   while (true) {
     const actions = await em.find(
@@ -98,7 +96,6 @@ async function processActionsCSV(job: Job<ProcessActionsCSVJob>) {
       totalRowsProcessed++
     }
 
-    // Update progress as percentage
     const progressPercent =
       totalCount > 0
         ? Math.min(99, Math.round((totalRowsProcessed / totalCount) * 100))
@@ -107,7 +104,6 @@ async function processActionsCSV(job: Job<ProcessActionsCSVJob>) {
     await job.updateProgress(progressPercent)
   }
 
-  // Mark as complete
   await job.updateProgress(100)
 
   performance.mark('end')
