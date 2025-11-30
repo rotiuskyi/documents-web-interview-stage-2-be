@@ -15,12 +15,10 @@ import {
   ActionResponseDto,
   PaginationMetaDto,
 } from './dto/get-actions-response.dto'
-import {
-  ProcessActionsCSVJobData,
-  ProcessActionsCSVJobResult,
-} from './process-actions-csv-job.type'
+import { ProcessActionsCSVJobResult } from './types/process-actions-csv-job-result.type'
 import { ProcessActionsCSVResponseDto } from './dto/process-actions-csv-response.dto'
-import { ProcessActionsCSVFiltersDto } from './dto/process-actions-csv-request.dto'
+import { ProcessActionsCSVFilters } from './dto/process-actions-csv-request.dto'
+import { ProcessActionsCSVRequestDto } from './dto/process-actions-csv-request.dto'
 
 @Injectable()
 export class ReportsService implements OnModuleInit, OnModuleDestroy {
@@ -32,7 +30,7 @@ export class ReportsService implements OnModuleInit, OnModuleDestroy {
 
     @InjectQueue(REPORTS_JOBS_QUEUE)
     private readonly reportsJobsQueue: Queue<
-      ProcessActionsCSVJobData,
+      ProcessActionsCSVRequestDto,
       ProcessActionsCSVJobResult
     >,
   ) {
@@ -86,15 +84,17 @@ export class ReportsService implements OnModuleInit, OnModuleDestroy {
         where.createdAt.$lte = new Date(dateTo)
       }
     }
-    if (metadataIp || metadataSign) {
-      const metadataFilter: Partial<Record<'ip' | 'sign', string>> = {}
-      if (metadataIp) {
-        metadataFilter.ip = metadataIp
+    if (metadataIp.length > 0 || metadataSign.length > 0) {
+      const metadataFilter: Partial<
+        Record<'ip' | 'sign', string | { $in: string[] }>
+      > = {}
+      if (metadataIp.length > 0) {
+        metadataFilter.ip = { $in: metadataIp }
       }
-      if (metadataSign) {
-        metadataFilter.sign = metadataSign
+      if (metadataSign.length > 0) {
+        metadataFilter.sign = { $in: metadataSign }
       }
-      where.metadata = metadataFilter as Record<'ip' | 'sign', string>
+      where.metadata = metadataFilter as Record<string, any>
     }
 
     const cursorResult = await em.findByCursor(ActionEntity, where, {
@@ -117,9 +117,9 @@ export class ReportsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async processActionsCSV(
-    filters: ProcessActionsCSVFiltersDto,
+    filters: ProcessActionsCSVFilters,
   ): Promise<ProcessActionsCSVResponseDto> {
-    const jobData: ProcessActionsCSVJobData = { filters }
+    const jobData: ProcessActionsCSVRequestDto = { filters }
     const job = await this.reportsJobsQueue.add('processActionsCSV', jobData)
 
     return { jobId: job.id, status: 'queued' }

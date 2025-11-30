@@ -9,7 +9,7 @@ import {
 import { Transform } from 'class-transformer'
 import { ActionType } from 'actions/action-type.enum'
 
-export class ProcessActionsCSVFiltersDto {
+export class ProcessActionsCSVFilters {
   @ApiProperty({
     type: [Number],
     description: 'Array of user IDs to filter actions',
@@ -62,8 +62,8 @@ export class ProcessActionsCSVFiltersDto {
 
 export class ProcessActionsCSVRequestDto {
   @ApiProperty({
-    type: ProcessActionsCSVFiltersDto,
+    type: ProcessActionsCSVFilters,
     description: 'Filters for the CSV export',
   })
-  filters: ProcessActionsCSVFiltersDto
+  filters: ProcessActionsCSVFilters
 }

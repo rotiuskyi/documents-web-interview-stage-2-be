@@ -3,13 +3,11 @@ import { join } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { Job } from 'bullmq'
 import { MikroORM } from '@mikro-orm/postgresql'
-import { QueryOrder } from '@mikro-orm/core'
+import { FilterQuery, QueryOrder } from '@mikro-orm/core'
 import mikroOrmConfig from 'mikro-orm.config'
 import { ActionEntity } from 'actions/action.entity'
-import {
-  ProcessActionsCSVJobData,
-  ProcessActionsCSVJobResult,
-} from './process-actions-csv-job.type'
+import { ProcessActionsCSVJobResult } from './types/process-actions-csv-job-result.type'
+import { ProcessActionsCSVRequestDto } from './dto/process-actions-csv-request.dto'
 
 type ColumnName =
   | keyof Pick<ActionEntity, 'id' | 'actionType' | 'createdAt'>
@@ -53,7 +51,7 @@ function buildCSVRow(action: ActionEntity) {
 }
 
 async function processActionsCSV(
-  job: Job<ProcessActionsCSVJobData, ProcessActionsCSVJobResult>,
+  job: Job<ProcessActionsCSVRequestDto, ProcessActionsCSVJobResult>,
 ): Promise<ProcessActionsCSVJobResult> {
   performance.mark('start')
   const orm = await getOrm()
@@ -75,12 +73,28 @@ async function processActionsCSV(
   })
 
   while (true) {
+    const where: FilterQuery<ActionEntity> = {}
+    if (job.data.filters.userId.length > 0) {
+      where.user = { id: { $in: job.data.filters.userId } }
+    }
+    if (job.data.filters.actionType.length > 0) {
+      where.actionType = { $in: job.data.filters.actionType }
+    }
+    if (job.data.filters.dateFrom || job.data.filters.dateTo) {
+      where.createdAt = {}
+      if (job.data.filters.dateFrom) {
+        where.createdAt.$gte = new Date(job.data.filters.dateFrom)
+      }
+      if (job.data.filters.dateTo) {
+        where.createdAt.$lte = new Date(job.data.filters.dateTo)
+      }
+    }
     const actions = await em.find(
       ActionEntity,
       {
+        ...where,
         // Use keyset pagination (id > lastId) to avoid count queries
         id: { $gt: lastId },
-        user: { id: { $in: job.data.filters.userId } },
       },
       {
         limit: ACTIONS_BATCH_SIZE,
@@ -114,13 +128,12 @@ async function processActionsCSV(
   performance.mark('end')
   performance.measure('processActionsCSV', 'start', 'end')
   const duration = performance.getEntriesByName('processActionsCSV')[0].duration
-  console.log(`processActionsCSV finished in ${duration}ms`)
 
   return {
     outputPath,
     totalRowsProcessed,
     duration,
-    jobId: job.id,
+    jobId: String(job.id),
   }
 }
 

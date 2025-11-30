@@ -13,7 +13,7 @@ export class ReportsController {
 
   @Get('actions')
   @ApiOperation({
-    description: 'Get filtered actions with cursor-based pagination',
+    summary: 'Get filtered actions with cursor-based pagination',
   })
   @ApiOkResponse({
     description: 'Successfully retrieved actions',

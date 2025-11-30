@@ -63,20 +63,34 @@ export class GetActionsQueryDto {
   dateTo?: string
 
   @ApiPropertyOptional({
-    description: 'Filter by IP address in metadata',
-    example: '192.168.1.1',
+    type: [String],
+    description: 'Filter by IP addresses in metadata',
   })
   @IsOptional()
-  @IsString()
-  metadataIp?: string
+  @Transform(({ value }): string[] => {
+    if (Array.isArray(value)) {
+      return value as string[]
+    }
+    return value ? [value as string] : []
+  })
+  @IsArray()
+  @IsString({ each: true })
+  metadataIp: string[] = []
 
   @ApiPropertyOptional({
-    description: 'Filter by zodiac sign in metadata',
-    example: 'Aries',
+    type: [String],
+    description: 'Filter by zodiac signs in metadata',
   })
   @IsOptional()
-  @IsString()
-  metadataSign?: string
+  @Transform(({ value }): string[] => {
+    if (Array.isArray(value)) {
+      return value as string[]
+    }
+    return value ? [value as string] : []
+  })
+  @IsArray()
+  @IsString({ each: true })
+  metadataSign: string[] = []
 
   @ApiPropertyOptional({
     description: 'Cursor for pagination (from previous response endCursor)',
@@ -88,7 +102,7 @@ export class GetActionsQueryDto {
   @ApiPropertyOptional({
     description: 'Number of items to fetch',
     minimum: 1,
-    maximum: 10000,
+    maximum: 10_000,
     default: 200,
     example: 200,
   })
@@ -96,6 +110,6 @@ export class GetActionsQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(10000)
+  @Max(10_000)
   limit?: number = 200
 }
