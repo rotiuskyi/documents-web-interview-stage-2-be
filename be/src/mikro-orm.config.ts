@@ -7,10 +7,11 @@ import { SeedManager } from '@mikro-orm/seeder'
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter'
 import { UserEntity } from './users/user.entity'
 import { ActionEntity } from './actions/action.entity'
+import { CsvExportEntity } from './reports/csv-export.entity'
 
 export default defineConfig({
   strict: true,
-  entities: [UserEntity, ActionEntity],
+  entities: [UserEntity, ActionEntity, CsvExportEntity],
   clientUrl: process.env.DATABASE_URL,
   debug: ['query', 'query-params'],
   metadataProvider: TsMorphMetadataProvider,

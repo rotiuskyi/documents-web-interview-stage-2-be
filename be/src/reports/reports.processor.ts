@@ -54,6 +54,8 @@ async function processActionsCSV(
   job: Job<ProcessActionsCSVRequestDto, ProcessActionsCSVJobResult>,
 ): Promise<ProcessActionsCSVJobResult> {
   performance.mark('start')
+  await job.updateProgress(0)
+
   const orm = await getOrm()
   const em = orm.em.fork()
 
@@ -63,32 +65,29 @@ async function processActionsCSV(
   const csvHeader = ACTIONS_SCV_COLUMNS.join(',') + '\n'
   writeStream.write(csvHeader)
 
+  const baseWhere: FilterQuery<ActionEntity> = {}
+  if (job.data.filters.userId.length > 0) {
+    baseWhere.user = { id: { $in: job.data.filters.userId } }
+  }
+  if (job.data.filters.actionType.length > 0) {
+    baseWhere.actionType = { $in: job.data.filters.actionType }
+  }
+  if (job.data.filters.dateFrom || job.data.filters.dateTo) {
+    baseWhere.createdAt = {}
+    if (job.data.filters.dateFrom) {
+      baseWhere.createdAt.$gte = new Date(job.data.filters.dateFrom)
+    }
+    if (job.data.filters.dateTo) {
+      baseWhere.createdAt.$lte = new Date(job.data.filters.dateTo)
+    }
+  }
+
   let lastId = 0
   let totalRowsProcessed = 0
-
-  await job.updateProgress(0)
-
-  const totalCount = await em.count(ActionEntity, {
-    user: { id: { $in: job.data.filters.userId } },
-  })
+  const totalCount = await em.count(ActionEntity, baseWhere)
 
   while (true) {
-    const where: FilterQuery<ActionEntity> = {}
-    if (job.data.filters.userId.length > 0) {
-      where.user = { id: { $in: job.data.filters.userId } }
-    }
-    if (job.data.filters.actionType.length > 0) {
-      where.actionType = { $in: job.data.filters.actionType }
-    }
-    if (job.data.filters.dateFrom || job.data.filters.dateTo) {
-      where.createdAt = {}
-      if (job.data.filters.dateFrom) {
-        where.createdAt.$gte = new Date(job.data.filters.dateFrom)
-      }
-      if (job.data.filters.dateTo) {
-        where.createdAt.$lte = new Date(job.data.filters.dateTo)
-      }
-    }
+    const where: FilterQuery<ActionEntity> = { ...baseWhere }
     const actions = await em.find(
       ActionEntity,
       {
@@ -123,18 +122,18 @@ async function processActionsCSV(
     await job.updateProgress(progressPercent)
   }
 
-  await job.updateProgress(100)
-
   performance.mark('end')
   performance.measure('processActionsCSV', 'start', 'end')
   const duration = performance.getEntriesByName('processActionsCSV')[0].duration
+  await job.updateProgress(100)
 
-  return {
+  const jobResult: ProcessActionsCSVJobResult = {
     outputPath,
     totalRowsProcessed,
     duration,
     jobId: String(job.id),
   }
+  return jobResult
 }
 
 export default processActionsCSV

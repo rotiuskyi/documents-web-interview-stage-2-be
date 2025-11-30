@@ -19,6 +19,7 @@ import { ProcessActionsCSVJobResult } from './types/process-actions-csv-job-resu
 import { ProcessActionsCSVResponseDto } from './dto/process-actions-csv-response.dto'
 import { ProcessActionsCSVFilters } from './dto/process-actions-csv-request.dto'
 import { ProcessActionsCSVRequestDto } from './dto/process-actions-csv-request.dto'
+import { CsvExportRepository } from './csv-export.repository'
 
 @Injectable()
 export class ReportsService implements OnModuleInit, OnModuleDestroy {
@@ -33,16 +34,68 @@ export class ReportsService implements OnModuleInit, OnModuleDestroy {
       ProcessActionsCSVRequestDto,
       ProcessActionsCSVJobResult
     >,
+    private readonly csvExportRepository: CsvExportRepository,
   ) {
     this.queueEvents = new QueueEvents(REPORTS_JOBS_QUEUE, {
       connection: { url: process.env.REDIS_URL },
     })
   }
 
-  onModuleInit() {
+  async onModuleInit() {
+    await this.queueEvents.waitUntilReady()
+
+    this.queueEvents.on('active', ({ jobId }) => {
+      console.log(`[Reports Service] Job ${jobId} started`)
+      // Create initial CSV export record when job starts
+      void this.csvExportRepository
+        .create({
+          outputPath: '',
+          totalRowsProcessed: 0,
+          duration: 0,
+          jobId: String(jobId),
+        })
+        .catch((error) => {
+          console.error(
+            `Failed to create CSV export record for job ${jobId}:`,
+            error,
+          )
+        })
+    })
+
+    this.queueEvents.on('progress', ({ jobId, data }) => {
+      console.log(`[Reports Service] Job ${jobId} progress:`, data)
+      // Update progress in database
+      void this.csvExportRepository
+        .updateByJobId(String(jobId), {
+          progress: data as number,
+        })
+        .catch((error) => {
+          console.error(`Failed to update progress for job ${jobId}:`, error)
+        })
+    })
+
     this.queueEvents.on('completed', ({ jobId, returnvalue }) => {
-      console.log(`[Reports Service] Job ${jobId} completed successfully`)
-      console.log('[Reports Service] Job return value:', returnvalue)
+      console.log(
+        `[Reports Service] Job ${jobId} completed successfully`,
+        returnvalue,
+      )
+      // Update CSV export record with final results
+      const result = returnvalue as unknown as ProcessActionsCSVJobResult
+      if (result) {
+        void this.csvExportRepository
+          .updateByJobId(String(jobId), {
+            outputPath: result.outputPath,
+            totalRowsProcessed: result.totalRowsProcessed,
+            duration: result.duration,
+            progress: 100,
+          })
+          .catch((error) => {
+            console.error(
+              `Failed to update CSV export record for job ${jobId}:`,
+              error,
+            )
+          })
+      }
     })
 
     this.queueEvents.on('failed', ({ jobId, failedReason }) => {
