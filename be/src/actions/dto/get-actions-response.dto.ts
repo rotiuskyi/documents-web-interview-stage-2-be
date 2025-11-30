@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { ActionType } from 'actions/action-type.enum'
+import { ActionType } from '../action-type.enum'
 
 export class UserInfoDto {
   @ApiProperty({ description: 'User ID', example: 1 })
@@ -9,7 +9,7 @@ export class UserInfoDto {
   name: string
 }
 
-export class ActionResponseDto {
+export class ActionResponseData {
   @ApiProperty({ description: 'Action ID', example: 1 })
   id: number
 
@@ -36,7 +36,7 @@ export class ActionResponseDto {
   createdAt: Date
 }
 
-export class PaginationMetaDto {
+export class PaginationMeta {
   @ApiPropertyOptional({
     description: 'Cursor for the first item in this page',
     example: 'eyJpZCI6MX0=',
@@ -70,14 +70,14 @@ export class PaginationMetaDto {
 
 export class GetActionsResponseDto {
   @ApiProperty({
-    type: [ActionResponseDto],
+    type: [ActionResponseData],
     description: 'Array of actions',
   })
-  data: ActionResponseDto[]
+  data: ActionResponseData[]
 
   @ApiProperty({
-    type: PaginationMetaDto,
+    type: PaginationMeta,
     description: 'Pagination metadata',
   })
-  pagination: PaginationMetaDto
+  pagination: PaginationMeta
 }

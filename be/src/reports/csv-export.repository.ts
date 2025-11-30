@@ -26,16 +26,11 @@ export class CsvExportRepository {
     return csvExport
   }
 
-  async findById(id: number): Promise<CsvExportEntity | null> {
-    return this.repository.findOne({ id })
-  }
-
-  async findByJobId(jobId: string): Promise<CsvExportEntity | null> {
-    return this.repository.findOne({ jobId })
-  }
-
-  async findAll(): Promise<CsvExportEntity[]> {
-    return this.repository.findAll({ orderBy: { createdAt: 'DESC' } })
+  async getCSVExports(): Promise<CsvExportEntity[]> {
+    return this.repository.findAll({
+      orderBy: { createdAt: 'DESC' },
+      limit: 100,
+    })
   }
 
   async updateByJobId(
@@ -44,7 +39,6 @@ export class CsvExportRepository {
       outputPath: string
       totalRowsProcessed: number
       duration: number
-      progress: number
     }>,
   ): Promise<CsvExportEntity | null> {
     const csvExport = await this.repository.findOne({ jobId })
@@ -60,9 +54,6 @@ export class CsvExportRepository {
     }
     if (data.duration !== undefined) {
       csvExport.duration = data.duration
-    }
-    if (data.progress !== undefined) {
-      csvExport.progress = data.progress
     }
 
     const em = this.repository.getEntityManager()

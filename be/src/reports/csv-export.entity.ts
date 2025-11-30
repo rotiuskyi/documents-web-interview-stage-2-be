@@ -17,9 +17,6 @@ export class CsvExportEntity {
   @Property({ type: 'text' })
   jobId!: string
 
-  @Property({ type: 'integer', default: 0 })
-  progress: number = 0
-
   @Property({ type: 'timestamptz', defaultRaw: 'now()' })
   createdAt: Date = new Date()
 }

@@ -1,8 +1,6 @@
-import { Controller, Get, Post, Query, Body } from '@nestjs/common'
+import { Controller, Post, Body } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiOkResponse, ApiBody } from '@nestjs/swagger'
 import { ReportsService } from './reports.service'
-import { GetActionsQueryDto } from './dto/get-actions-query.dto'
-import { GetActionsResponseDto } from './dto/get-actions-response.dto'
 import { ProcessActionsCSVRequestDto } from './dto/process-actions-csv-request.dto'
 import { ProcessActionsCSVResponseDto } from './dto/process-actions-csv-response.dto'
 
@@ -11,21 +9,7 @@ import { ProcessActionsCSVResponseDto } from './dto/process-actions-csv-response
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
-  @Get('actions')
-  @ApiOperation({
-    summary: 'Get filtered actions with cursor-based pagination',
-  })
-  @ApiOkResponse({
-    description: 'Successfully retrieved actions',
-    type: GetActionsResponseDto,
-  })
-  async getActions(
-    @Query() query: GetActionsQueryDto,
-  ): Promise<GetActionsResponseDto> {
-    return this.reportsService.getActions(query)
-  }
-
-  @Post('actions/csv_export')
+  @Post('csv_exports')
   @ApiOperation({
     summary: 'Export actions to CSV',
     description:
