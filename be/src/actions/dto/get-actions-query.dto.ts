@@ -10,7 +10,7 @@ import {
 } from 'class-validator'
 import { Type, Transform } from 'class-transformer'
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { ActionType } from 'actions/action-type.enum'
+import { ActionType } from '../action-type.enum'
 
 export class GetActionsQueryDto {
   @ApiPropertyOptional({
