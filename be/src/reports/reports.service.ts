@@ -7,6 +7,7 @@ import { ProcessActionsCSVResponseDto } from './dto/process-actions-csv-response
 import { ProcessActionsCSVFilters } from './dto/process-actions-csv-request.dto'
 import { ProcessActionsCSVRequestDto } from './dto/process-actions-csv-request.dto'
 import { CsvExportRepository } from './csv-export.repository'
+import { CsvExportEntity } from './csv-export.entity'
 
 @Injectable()
 export class ReportsService implements OnModuleInit, OnModuleDestroy {
@@ -89,5 +90,9 @@ export class ReportsService implements OnModuleInit, OnModuleDestroy {
     const job = await this.reportsJobsQueue.add('processActionsCSV', jobData)
 
     return { jobId: job.id, status: 'queued' }
+  }
+
+  async getCSVExports(): Promise<CsvExportEntity[]> {
+    return this.csvExportRepository.getCSVExports()
   }
 }

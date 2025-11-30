@@ -1,8 +1,9 @@
-import { Controller, Post, Body } from '@nestjs/common'
+import { Controller, Get, Post, Body } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiOkResponse, ApiBody } from '@nestjs/swagger'
 import { ReportsService } from './reports.service'
 import { ProcessActionsCSVRequestDto } from './dto/process-actions-csv-request.dto'
 import { ProcessActionsCSVResponseDto } from './dto/process-actions-csv-response.dto'
+import { CsvExportEntity } from './csv-export.entity'
 
 @ApiTags('reports')
 @Controller('reports')
@@ -27,5 +28,18 @@ export class ReportsController {
     @Body() body: ProcessActionsCSVRequestDto,
   ): Promise<ProcessActionsCSVResponseDto> {
     return this.reportsService.processActionsCSV(body.filters)
+  }
+
+  @Get('csv_exports')
+  @ApiOperation({
+    summary: 'Get all CSV exports metadata',
+    description: 'Returns a list of all CSV exports metadata.',
+  })
+  @ApiOkResponse({
+    description: 'List of CSV exports',
+    type: [CsvExportEntity],
+  })
+  async getCSVExports(): Promise<CsvExportEntity[]> {
+    return this.reportsService.getCSVExports()
   }
 }

@@ -29,7 +29,7 @@ export class CsvExportRepository {
   async getCSVExports(): Promise<CsvExportEntity[]> {
     return this.repository.findAll({
       orderBy: { createdAt: 'DESC' },
-      limit: 100,
+      limit: 1_000,
     })
   }
 
