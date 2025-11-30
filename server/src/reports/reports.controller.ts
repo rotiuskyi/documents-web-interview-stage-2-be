@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiOkResponse, ApiBody } from '@nestjs/swagger'
 import { ReportsService } from './reports.service'
 import { ProcessActionsCSVRequestDto } from './dto/process-actions-csv-request.dto'
 import { ProcessActionsCSVResponseDto } from './dto/process-actions-csv-response.dto'
-import { CsvExportEntity } from './csv-export.entity'
+import { GetActionsCSVMetaResponseDto } from './dto/get-actions-csv-meta.response.dto'
 
 @ApiTags('reports')
 @Controller('reports')
@@ -36,10 +36,10 @@ export class ReportsController {
     description: 'Returns a list of all CSV exports metadata.',
   })
   @ApiOkResponse({
-    description: 'List of CSV exports',
-    type: [CsvExportEntity],
+    description: 'List of CSV exports metadata',
+    type: [GetActionsCSVMetaResponseDto],
   })
-  async getCSVExports(): Promise<CsvExportEntity[]> {
+  async getCSVExports(): Promise<GetActionsCSVMetaResponseDto[]> {
     return this.reportsService.getCSVExports()
   }
 }
